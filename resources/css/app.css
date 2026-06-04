@@ -1,0 +1,127 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../../resources/views/**/*.blade.php';
+
+@theme {
+    /* ── Klaar Brand Colors ── */
+    --color-ink: #17130E;
+    --color-ink-90: #2E2A23;
+    --color-ink-70: #5D574F;
+    --color-ink-50: #8B8577;
+    --color-ink-30: #B9B4A9;
+    --color-ink-10: #E8E5DF;
+
+    --color-paper: #F3EEE3;
+    --color-amber: #FFB400;
+    --color-clay: #A0897A;
+    --color-snow: #FFFFFF;
+
+    /* ── Typography ── */
+    --font-display: 'Anton', ui-sans-serif, system-ui, sans-serif;
+    --font-heading: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    /* ── Border Radii ── */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-pill: 9999px;
+
+    /* ── Shadows ── */
+    --shadow-sm: 0 1px 2px rgba(23, 19, 14, 0.06);
+    --shadow-md: 0 2px 8px rgba(23, 19, 14, 0.08);
+    --shadow-lg: 0 8px 24px rgba(23, 19, 14, 0.12);
+}
+
+/* ── Base styles ── */
+body {
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background-color: var(--color-paper);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Form inputs (replaces @tailwindcss/forms) ── */
+[type='text'],
+[type='email'],
+[type='url'],
+[type='password'],
+[type='number'],
+[type='date'],
+[type='datetime-local'],
+[type='month'],
+[type='search'],
+[type='tel'],
+[type='time'],
+[type='week'],
+[multiple],
+textarea,
+select {
+    appearance: none;
+    background-color: var(--color-snow);
+    border: 1px solid var(--color-ink-30);
+    border-radius: var(--radius-md);
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    color: var(--color-ink);
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+[type='text']:focus,
+[type='email']:focus,
+[type='url']:focus,
+[type='password']:focus,
+[type='number']:focus,
+[type='date']:focus,
+[type='datetime-local']:focus,
+[type='month']:focus,
+[type='search']:focus,
+[type='tel']:focus,
+[type='time']:focus,
+[type='week']:focus,
+[multiple]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--color-amber);
+    box-shadow: 0 0 0 3px rgba(255, 180, 0, 0.2);
+}
+
+[type='checkbox'],
+[type='radio'] {
+    appearance: none;
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    background-color: var(--color-snow);
+    border: 1px solid var(--color-ink-30);
+    color: var(--color-amber);
+    vertical-align: middle;
+}
+
+[type='checkbox'] {
+    border-radius: 4px;
+}
+
+[type='radio'] {
+    border-radius: 50%;
+}
+
+[type='checkbox']:checked,
+[type='radio']:checked {
+    background-color: var(--color-amber);
+    border-color: var(--color-amber);
+    background-image: none;
+}
+
+[type='checkbox']:focus,
+[type='radio']:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 180, 0, 0.2);
+}
