@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Jobs\ProcessPhotoJob;
 use App\Models\Document;
 use App\Models\Entry;
 use Livewire\Component;
@@ -65,8 +66,7 @@ class PhotoUpload extends Component
             ]);
         }
 
-        // TODO: Dispatch OCR job when Phase 2 is built
-        // ProcessPhotoJob::dispatch($entry);
+        ProcessPhotoJob::dispatch($entry);
 
         $this->entryId = $entry->id;
         $this->isUploading = false;

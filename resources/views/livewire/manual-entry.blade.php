@@ -1,106 +1,132 @@
 <div class="space-y-6">
     <form wire:submit="save" class="space-y-6">
 
-        {{-- Basic info --}}
-        <div class="bg-snow rounded-lg border border-ink-10/50 shadow-sm p-6 space-y-5">
-            <h3 class="font-heading font-semibold text-ink">Basisgegevens</h3>
+        {{-- Basisgegevens --}}
+        <div class="bg-ink rounded-sm border border-ink-70/20 p-6 space-y-5" style="background-image: radial-gradient(circle, rgba(255,180,0,0.05) 1px, transparent 1px); background-size: 20px 20px;">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-md bg-amber/10 flex items-center justify-center">
+                    <i class="fa-solid fa-file-lines text-amber text-sm"></i>
+                </div>
+                <h3 class="font-heading font-semibold text-paper text-sm">Basisgegevens</h3>
+            </div>
 
             <div>
-                <label for="title" class="block text-sm font-medium text-ink-70 mb-1.5">Titel *</label>
+                <label for="title" class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-ink-50 mb-2">Titel *</label>
                 <input
                     type="text"
                     id="title"
                     wire:model="title"
                     placeholder="Bijv. Dagwerk badkamer renovatie"
-                    class="w-full rounded-md border border-ink-30 bg-snow px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-30 focus:border-amber focus:ring-2 focus:ring-amber/30 focus:outline-none"
+                    class="klaar-dark-input w-full"
                 >
-                @error('title') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                @error('title') <p class="mt-1 text-xs text-red-400">{{ $message }}</p> @enderror
             </div>
 
             <div>
-                <label for="entryDate" class="block text-sm font-medium text-ink-70 mb-1.5">Datum *</label>
+                <label for="entryDate" class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-ink-50 mb-2">Datum *</label>
                 <input
                     type="date"
                     id="entryDate"
                     wire:model="entryDate"
-                    class="w-full rounded-md border border-ink-30 bg-snow px-3.5 py-2.5 text-sm text-ink focus:border-amber focus:ring-2 focus:ring-amber/30 focus:outline-none"
+                    class="klaar-dark-input w-full"
                 >
-                @error('entryDate') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                @error('entryDate') <p class="mt-1 text-xs text-red-400">{{ $message }}</p> @enderror
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="clientId" class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-ink-50 mb-2">Klant</label>
+                    <select id="clientId" wire:model="clientId" class="klaar-dark-input w-full">
+                        <option value="">Geen klant</option>
+                        @foreach($clients as $client)
+                            <option value="{{ $client->id }}">{{ $client->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="projectId" class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-ink-50 mb-2">Project</label>
+                    <select id="projectId" wire:model="projectId" class="klaar-dark-input w-full">
+                        <option value="">Geen project</option>
+                        @foreach($projects as $project)
+                            <option value="{{ $project->id }}">{{ $project->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
 
             <div>
-                <label for="description" class="block text-sm font-medium text-ink-70 mb-1.5">Beschrijving</label>
+                <label for="description" class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-ink-50 mb-2">Beschrijving</label>
                 <textarea
                     id="description"
                     wire:model="description"
                     rows="3"
                     placeholder="Optioneel: beschrijf wat je gedaan hebt"
-                    class="w-full rounded-md border border-ink-30 bg-snow px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-30 focus:border-amber focus:ring-2 focus:ring-amber/30 focus:outline-none resize-none"
+                    class="klaar-dark-input w-full resize-none"
                 ></textarea>
             </div>
         </div>
 
-        {{-- Line items --}}
-        <div class="bg-snow rounded-lg border border-ink-10/50 shadow-sm p-6 space-y-5">
+        {{-- Regelitems --}}
+        <div class="bg-ink rounded-sm border border-ink-70/20 p-6 space-y-5" style="background-image: radial-gradient(circle, rgba(255,180,0,0.05) 1px, transparent 1px); background-size: 20px 20px;">
             <div class="flex items-center justify-between">
-                <h3 class="font-heading font-semibold text-ink">Regelitems</h3>
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-md bg-amber/10 flex items-center justify-center">
+                        <i class="fa-solid fa-clipboard-list text-amber text-sm"></i>
+                    </div>
+                    <h3 class="font-heading font-semibold text-paper text-sm">Regelitems</h3>
+                </div>
                 <button
                     type="button"
                     wire:click="addLineItem"
-                    class="inline-flex items-center gap-1 text-sm font-medium text-amber hover:text-amber/80 transition"
+                    class="inline-flex items-center gap-1.5 text-sm font-heading font-semibold text-amber hover:text-amber/80 transition"
                 >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                    </svg>
+                    <i class="fa-solid fa-plus text-xs"></i>
                     Regel toevoegen
                 </button>
             </div>
 
             <div class="space-y-4">
                 @foreach($lineItems as $index => $item)
-                    <div class="relative bg-paper/50 rounded-lg p-4 space-y-3">
-                        {{-- Remove button --}}
+                    <div class="relative bg-ink-90/60 rounded-sm p-4 space-y-3 border border-ink-70/15">
                         @if(count($lineItems) > 1)
                             <button
                                 type="button"
                                 wire:click="removeLineItem({{ $index }})"
-                                class="absolute top-3 right-3 w-7 h-7 text-ink-30 hover:text-red-500 transition flex items-center justify-center"
+                                class="absolute top-3 right-3 w-7 h-7 text-ink-50 hover:text-red-400 transition flex items-center justify-center"
                                 title="Verwijder regel"
                             >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
+                                <i class="fa-solid fa-xmark text-xs"></i>
                             </button>
                         @endif
 
                         <div>
-                            <label class="block text-xs font-medium text-ink-50 mb-1">Omschrijving *</label>
+                            <label class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-ink-50 mb-1.5">Omschrijving *</label>
                             <input
                                 type="text"
                                 wire:model="lineItems.{{ $index }}.description"
                                 placeholder="Bijv. Tegels zetten badkamer"
-                                class="w-full rounded-md border border-ink-30 bg-snow px-3 py-2 text-sm text-ink placeholder:text-ink-30 focus:border-amber focus:ring-2 focus:ring-amber/30 focus:outline-none"
+                                class="klaar-dark-input w-full"
                             >
-                            @error("lineItems.{$index}.description") <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            @error("lineItems.{$index}.description") <p class="mt-1 text-xs text-red-400">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="grid grid-cols-3 gap-3">
                             <div>
-                                <label class="block text-xs font-medium text-ink-50 mb-1">Aantal *</label>
+                                <label class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-ink-50 mb-1.5">Aantal *</label>
                                 <input
                                     type="number"
                                     wire:model="lineItems.{{ $index }}.quantity"
                                     step="0.01"
                                     min="0.01"
-                                    class="w-full rounded-md border border-ink-30 bg-snow px-3 py-2 text-sm text-ink font-mono focus:border-amber focus:ring-2 focus:ring-amber/30 focus:outline-none"
+                                    class="klaar-dark-input w-full font-mono"
                                 >
-                                @error("lineItems.{$index}.quantity") <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                @error("lineItems.{$index}.quantity") <p class="mt-1 text-xs text-red-400">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-ink-50 mb-1">Eenheid *</label>
+                                <label class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-ink-50 mb-1.5">Eenheid *</label>
                                 <select
                                     wire:model="lineItems.{{ $index }}.unit"
-                                    class="w-full rounded-md border border-ink-30 bg-snow px-3 py-2 text-sm text-ink focus:border-amber focus:ring-2 focus:ring-amber/30 focus:outline-none"
+                                    class="klaar-dark-input w-full"
                                 >
                                     <option value="uur">Uur</option>
                                     <option value="stuk">Stuk</option>
@@ -111,7 +137,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-ink-50 mb-1">Prijs *</label>
+                                <label class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-ink-50 mb-1.5">Prijs *</label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-50">&euro;</span>
                                     <input
@@ -120,19 +146,19 @@
                                         step="0.01"
                                         min="0"
                                         placeholder="0,00"
-                                        class="w-full rounded-md border border-ink-30 bg-snow pl-7 pr-3 py-2 text-sm text-ink font-mono focus:border-amber focus:ring-2 focus:ring-amber/30 focus:outline-none"
+                                        class="klaar-dark-input w-full pl-7 font-mono"
                                     >
                                 </div>
-                                @error("lineItems.{$index}.unit_price") <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                @error("lineItems.{$index}.unit_price") <p class="mt-1 text-xs text-red-400">{{ $message }}</p> @enderror
                             </div>
                         </div>
 
-                        {{-- Line total --}}
+                        {{-- Regeltotaal --}}
                         @php
                             $lineTotal = (float)($item['quantity'] ?? 0) * (float)($item['unit_price'] ?? 0);
                         @endphp
                         @if($lineTotal > 0)
-                            <div class="text-right text-sm font-mono font-medium text-ink-70">
+                            <div class="text-right text-sm font-mono font-medium text-amber">
                                 &euro;{{ number_format($lineTotal, 2, ',', '.') }}
                             </div>
                         @endif
@@ -140,34 +166,33 @@
                 @endforeach
             </div>
 
-            {{-- Total --}}
+            {{-- Totaal --}}
             @php
                 $total = collect($lineItems)->sum(fn($i) => (float)($i['quantity'] ?? 0) * (float)($i['unit_price'] ?? 0));
             @endphp
             @if($total > 0)
-                <div class="flex items-center justify-between pt-4 border-t border-ink-10">
-                    <span class="text-sm font-medium text-ink-70">Totaal (excl. BTW)</span>
-                    <span class="font-mono text-lg font-bold text-ink">&euro;{{ number_format($total, 2, ',', '.') }}</span>
+                <div class="flex items-center justify-between pt-4 border-t border-ink-70/20">
+                    <span class="text-sm font-heading font-semibold text-ink-30">Totaal (excl. BTW)</span>
+                    <span class="font-mono text-xl font-bold text-amber">&euro;{{ number_format($total, 2, ',', '.') }}</span>
                 </div>
             @endif
         </div>
 
-        {{-- Submit --}}
+        {{-- Knoppen --}}
         <div class="flex items-center justify-end gap-3">
-            <a href="{{ route('dashboard') }}" class="px-5 py-2.5 bg-snow border border-ink-10 text-ink-70 text-sm font-medium rounded-md hover:bg-ink-10/50 transition">
+            <a href="{{ route('dashboard') }}" class="border border-ink px-5 py-2.5 text-ink font-semibold text-sm font-heading rounded-sm transition hover:bg-ink hover:text-paper">
                 Annuleren
             </a>
             <button
                 type="submit"
-                class="px-5 py-2.5 bg-amber text-ink text-sm font-semibold rounded-md hover:bg-amber/90 transition shadow-sm disabled:opacity-50"
+                class="border border-amber bg-amber px-5 py-2.5 text-ink font-semibold text-sm font-heading rounded-sm transition hover:brightness-110 hover:shadow-[0_4px_16px_rgba(255,180,0,0.3)] disabled:opacity-50"
                 wire:loading.attr="disabled"
             >
-                <span wire:loading.remove wire:target="save">Opslaan als concept</span>
+                <span wire:loading.remove wire:target="save">
+                    <i class="fa-solid fa-check text-xs mr-1.5"></i> Opslaan als concept
+                </span>
                 <span wire:loading wire:target="save" class="flex items-center gap-2">
-                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <i class="fa-solid fa-spinner fa-spin text-xs"></i>
                     Opslaan...
                 </span>
             </button>

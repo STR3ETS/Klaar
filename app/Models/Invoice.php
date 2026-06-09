@@ -53,6 +53,30 @@ class Invoice extends Model
         return $this->morphMany(Document::class, 'documentable');
     }
 
+    public static function generateNumber(int $workspaceId): string
+    {
+        $year = now()->year;
+        $prefix = $year . '-';
+
+        $lastNumber = static::where('workspace_id', $workspaceId)
+            ->where('invoice_number', 'like', $prefix . '%')
+            ->orderByDesc('invoice_number')
+            ->value('invoice_number');
+
+        if ($lastNumber) {
+            $seq = (int) substr($lastNumber, strlen($prefix)) + 1;
+        } else {
+            $seq = 1;
+        }
+
+        return $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+    }
+
+    public function isSent(): bool
+    {
+        return $this->status === 'sent';
+    }
+
     public function isDraft(): bool
     {
         return $this->status === 'draft';

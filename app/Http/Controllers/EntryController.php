@@ -10,19 +10,32 @@ class EntryController extends Controller
     public function index(Request $request)
     {
         $workspace = $request->user()->currentWorkspace();
-        $entries = $workspace->entries()
-            ->with('project')
-            ->latest()
-            ->paginate(20);
 
-        return view('entries.index', compact('entries'));
-    }
+        $query = $workspace->entries()->with(['project', 'client']);
 
-    public function create(Request $request)
-    {
-        $type = $request->query('type', 'voice');
+        // Filters
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        if ($request->filled('client')) {
+            $query->where('client_id', $request->client);
+        }
+        if ($request->filled('project')) {
+            $query->where('project_id', $request->project);
+        }
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
 
-        return view('entries.create', compact('type'));
+        $entries = $query->latest()->paginate(20)->withQueryString();
+
+        $clients = $workspace->clients()->orderBy('name')->get();
+        $projects = $workspace->projects()->where('status', 'active')->orderBy('name')->get();
+
+        return view('werkbonnen.index', compact('entries', 'clients', 'projects'));
     }
 
     public function show(Request $request, Entry $entry)
@@ -30,9 +43,18 @@ class EntryController extends Controller
         $workspace = $request->user()->currentWorkspace();
         abort_unless($entry->workspace_id === $workspace->id, 403);
 
-        $entry->load(['lineItems', 'project', 'documents', 'aiJobs']);
+        $entry->load(['lineItems', 'project', 'client', 'documents', 'aiJobs', 'invoices']);
 
-        return view('entries.show', compact('entry'));
+        return view('werkbonnen.show', compact('entry'));
+    }
+
+    public function edit(Request $request, Entry $entry)
+    {
+        $workspace = $request->user()->currentWorkspace();
+        abort_unless($entry->workspace_id === $workspace->id, 403);
+        abort_unless($entry->isDraft(), 403);
+
+        return view('werkbonnen.edit', compact('entry'));
     }
 
     public function finalize(Request $request, Entry $entry)
@@ -43,8 +65,8 @@ class EntryController extends Controller
 
         $entry->update(['status' => 'final']);
 
-        return redirect()->route('entries.show', $entry)
-            ->with('success', 'Invoer gemarkeerd als definitief.');
+        return redirect()->route('werkbonnen.show', $entry)
+            ->with('success', 'Werkbon gemarkeerd als definitief.');
     }
 
     public function destroy(Request $request, Entry $entry)
@@ -57,7 +79,7 @@ class EntryController extends Controller
         $entry->documents()->delete();
         $entry->delete();
 
-        return redirect()->route('entries.index')
-            ->with('success', 'Invoer verwijderd.');
+        return redirect()->route('werkbonnen.index')
+            ->with('success', 'Werkbon verwijderd.');
     }
 }

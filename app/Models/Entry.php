@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Entry extends Model
 {
     protected $fillable = [
-        'workspace_id', 'project_id', 'type', 'status', 'title',
+        'workspace_id', 'project_id', 'client_id', 'type', 'status', 'title',
         'raw_transcript', 'ai_extracted_data', 'total_amount', 'entry_date',
     ];
 
@@ -31,6 +31,11 @@ class Entry extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
     }
 
     public function lineItems(): HasMany

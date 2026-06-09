@@ -14,20 +14,22 @@ class VoiceRecorder extends Component
 
     public $audioFile;
     public $isUploading = false;
-    public $uploadComplete = false;
     public $entryId = null;
 
+    /**
+     * Fallback path: no Web Speech API available.
+     * Uploads audio and sends to Whisper first, then Claude.
+     */
     public function uploadAudio()
     {
         $this->validate([
-            'audioFile' => 'required|file|max:51200', // 50MB max
+            'audioFile' => 'required|file|max:51200',
         ]);
 
         $this->isUploading = true;
 
         $workspace = auth()->user()->currentWorkspace();
 
-        // Create entry
         $entry = Entry::create([
             'workspace_id' => $workspace->id,
             'type' => 'voice',
@@ -35,13 +37,11 @@ class VoiceRecorder extends Component
             'entry_date' => now()->toDateString(),
         ]);
 
-        // Store audio file
         $path = $this->audioFile->store(
             "voice/{$workspace->id}",
             'local'
         );
 
-        // Create document record
         Document::create([
             'documentable_type' => Entry::class,
             'documentable_id' => $entry->id,
@@ -53,12 +53,13 @@ class VoiceRecorder extends Component
             'size' => $this->audioFile->getSize(),
         ]);
 
-        // Dispatch transcription job
         TranscribeAudioJob::dispatch($entry, $path);
 
         $this->entryId = $entry->id;
         $this->isUploading = false;
-        $this->uploadComplete = true;
+
+        // Redirect to entry page (processing happens in background via queue)
+        return $this->redirect(route('werkbonnen.show', $entry->id));
     }
 
     public function render()

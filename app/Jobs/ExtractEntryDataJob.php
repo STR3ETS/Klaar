@@ -47,16 +47,19 @@ class ExtractEntryDataJob implements ShouldQueue
             $extracted = $result['extracted'];
             $usage = $result['usage'];
 
+            // Use first entry from the entries array (fallback path handles one entry)
+            $entryData = $extracted['entries'][0] ?? $extracted;
+
             // Update entry with extracted data
             $this->entry->update([
-                'title' => $extracted['title'] ?? 'Zonder titel',
-                'ai_extracted_data' => $extracted,
+                'title' => $entryData['title'] ?? 'Zonder titel',
+                'ai_extracted_data' => $entryData,
                 'status' => 'draft',
             ]);
 
             // Create line items
             $totalAmount = 0;
-            foreach (($extracted['line_items'] ?? []) as $i => $item) {
+            foreach (($entryData['line_items'] ?? []) as $i => $item) {
                 $lineTotal = (float) ($item['quantity'] ?? 0) * (float) ($item['unit_price'] ?? 0);
                 $totalAmount += $lineTotal;
 

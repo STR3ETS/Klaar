@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Client extends Model
 {
     protected $fillable = [
-        'workspace_id', 'name', 'email', 'phone', 'company',
+        'workspace_id', 'type', 'name', 'email', 'phone', 'company',
         'address_street', 'address_housenumber', 'address_postcode',
         'address_city', 'address_country', 'kvk_number', 'btw_number', 'notes',
     ];
@@ -22,6 +22,11 @@ class Client extends Model
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
+    }
+
+    public function entries(): HasMany
+    {
+        return $this->hasMany(Entry::class);
     }
 
     public function invoices(): HasMany

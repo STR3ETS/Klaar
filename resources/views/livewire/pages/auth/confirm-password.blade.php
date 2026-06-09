@@ -33,29 +33,32 @@ new #[Layout('layouts.guest')] class extends Component
     }
 }; ?>
 
-<div>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('This is a secure area of the application. Please confirm your password before continuing.') }}
+<div class="max-w-md mx-auto bg-paper border border-ink-70/20 rounded-sm shadow-xl px-8 py-12">
+    <div class="text-center mb-8">
+        <div class="w-14 h-14 rounded-full bg-amber/10 flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-lock text-amber text-xl"></i>
+        </div>
+        <h1 class="font-display text-3xl text-ink uppercase">Wachtwoord bevestigen</h1>
+        <p class="text-sm text-ink-50 mt-2 leading-relaxed">Dit is een beveiligd gedeelte. Bevestig je wachtwoord om verder te gaan.</p>
     </div>
 
     <form wire:submit="confirmPassword">
         <!-- Password -->
         <div>
-            <x-input-label for="password" :value="__('Password')" />
-
+            <x-input-label for="password" value="Wachtwoord" />
             <x-text-input wire:model="password"
                           id="password"
                           class="block mt-1 w-full"
                           type="password"
                           name="password"
-                          required autocomplete="current-password" />
-
+                          required autocomplete="current-password"
+                          placeholder="Je wachtwoord" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
-        <div class="flex justify-end mt-4">
-            <x-primary-button>
-                {{ __('Confirm') }}
+        <div class="mt-6">
+            <x-primary-button class="w-full justify-center py-3">
+                Bevestigen
             </x-primary-button>
         </div>
     </form>

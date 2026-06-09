@@ -52,4 +52,12 @@ class User extends Authenticatable
     {
         return $this->plan === 'free' && !$this->onTrial();
     }
+
+    public function fullAddress(): string
+    {
+        return collect([
+            trim(($this->address_street ?? '') . ' ' . ($this->address_housenumber ?? '')),
+            trim(($this->address_postcode ?? '') . ' ' . ($this->address_city ?? '')),
+        ])->filter()->implode(', ');
+    }
 }

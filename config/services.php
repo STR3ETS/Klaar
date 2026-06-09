@@ -43,4 +43,9 @@ return [
         'api_key' => env('ANTHROPIC_API_KEY'),
     ],
 
+    'ffmpeg' => [
+        'binary' => env('FFMPEG_BINARY', 'ffmpeg'),
+        'ffprobe_binary' => env('FFPROBE_BINARY', 'ffprobe'),
+    ],
+
 ];

@@ -90,7 +90,7 @@ textarea:focus,
 select:focus {
     outline: none;
     border-color: var(--color-amber);
-    box-shadow: 0 0 0 3px rgba(255, 180, 0, 0.2);
+    box-shadow: none;
 }
 
 [type='checkbox'],
@@ -123,5 +123,31 @@ select:focus {
 [type='checkbox']:focus,
 [type='radio']:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(255, 180, 0, 0.2);
+    box-shadow: none;
+}
+
+/* ── Dark-theme form inputs (for forms on bg-ink cards) ── */
+.klaar-dark-input {
+    appearance: none;
+    background-color: var(--color-ink-90) !important;
+    border: 1px solid color-mix(in srgb, var(--color-ink-70) 30%, transparent) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: var(--color-paper) !important;
+    color-scheme: dark;
+    transition: border-color 150ms ease;
+}
+.klaar-dark-input::placeholder {
+    color: var(--color-ink-50);
+}
+.klaar-dark-input:focus {
+    outline: none;
+    border-color: var(--color-amber) !important;
+    box-shadow: none;
+}
+.klaar-dark-input option {
+    background-color: var(--color-ink-90);
+    color: var(--color-paper);
 }

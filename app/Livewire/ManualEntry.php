@@ -11,6 +11,8 @@ class ManualEntry extends Component
     public string $title = '';
     public string $description = '';
     public string $entryDate = '';
+    public ?int $clientId = null;
+    public ?int $projectId = null;
     public array $lineItems = [];
     public bool $isSaving = false;
     public ?int $entryId = null;
@@ -54,6 +56,8 @@ class ManualEntry extends Component
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'entryDate' => 'required|date',
+            'clientId' => 'nullable|exists:clients,id',
+            'projectId' => 'nullable|exists:projects,id',
             'lineItems' => 'required|array|min:1',
             'lineItems.*.description' => 'required|string|max:255',
             'lineItems.*.quantity' => 'required|numeric|min:0.01',
@@ -71,6 +75,8 @@ class ManualEntry extends Component
             'status' => 'draft',
             'title' => $this->title,
             'entry_date' => $this->entryDate,
+            'client_id' => $this->clientId,
+            'project_id' => $this->projectId,
             'ai_extracted_data' => [
                 'beschrijving' => $this->description,
             ],
@@ -98,11 +104,15 @@ class ManualEntry extends Component
         $this->entryId = $entry->id;
         $this->isSaving = false;
 
-        return redirect()->route('entries.show', $entry);
+        return redirect()->route('werkbonnen.show', $entry);
     }
 
     public function render()
     {
-        return view('livewire.manual-entry');
+        $workspace = auth()->user()->currentWorkspace();
+        $clients = $workspace->clients()->orderBy('name')->get();
+        $projects = $workspace->projects()->where('status', 'active')->orderBy('name')->get();
+
+        return view('livewire.manual-entry', compact('clients', 'projects'));
     }
 }
