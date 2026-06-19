@@ -82,6 +82,9 @@ class FFmpegService
      *
      * @return array<string> Absolute paths to extracted JPEG files
      */
+    /**
+     * @return array<array{path: string, timestamp: int}> Frames with their timestamps
+     */
     public function extractKeyframes(string $videoPath, int $maxFrames = 10): array
     {
         if (!file_exists($videoPath)) {
@@ -104,7 +107,7 @@ class FFmpegService
             throw new RuntimeException("Cannot create temp directory: {$outputDir}");
         }
 
-        $paths = [];
+        $frames = [];
 
         for ($i = 0; $i < $frameCount; $i++) {
             $timestamp = $i * $interval;
@@ -123,7 +126,7 @@ class FFmpegService
             exec($cmd, $output, $returnCode);
 
             if ($returnCode === 0 && file_exists($outputFile)) {
-                $paths[] = $outputFile;
+                $frames[] = ['path' => $outputFile, 'timestamp' => $timestamp];
             } else {
                 Log::warning("FFmpeg keyframe extraction failed at {$timestamp}s", [
                     'video' => $videoPath,
@@ -132,6 +135,6 @@ class FFmpegService
             }
         }
 
-        return $paths;
+        return $frames;
     }
 }

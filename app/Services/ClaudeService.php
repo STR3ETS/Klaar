@@ -9,7 +9,7 @@ class ClaudeService
 {
     protected string $apiKey;
     protected string $baseUrl = 'https://api.anthropic.com/v1';
-    protected string $model = 'claude-sonnet-4-20250514';
+    protected string $model = 'claude-sonnet-4-6';
 
     public function __construct()
     {
@@ -126,18 +126,40 @@ Je bent een administratie-assistent voor een Nederlandse aannemer/ZZP'er in de b
 Je ontvangt een transcript van een ingesproken werkregistratie.
 Extraheer gestructureerde gegevens en retourneer ALLEEN geldige JSON.
 
-BELANGRIJK: De aannemer kan meerdere klussen of werkdagen beschrijven in één opname.
+TRANSCRIPT FORMATEN:
+Het transcript kan in verschillende formaten komen:
+1. Gewoon spraaktranscript (alleen tekst)
+2. Video-transcript met secties:
+   - "== GESPROKEN TEKST ==" bevat wat de aannemer zegt
+   - "== VISUELE ANALYSE ==" bevat een AI-beschrijving van wat er in de video te zien is
+   Gebruik BEIDE secties samen om de werkbon te genereren. De visuele analyse kan extra details bevatten over materialen, afmetingen, en staat van het werk.
+
+MEERDERE ENTRIES:
+De aannemer kan meerdere klussen of werkdagen beschrijven in één opname.
 Maak voor ELKE aparte klus of werkdag een apart entry-object aan.
-Voorbeelden van meerdere entries:
 - "Ik heb drie dagen gewerkt" → 3 entries
 - "Maandag deed ik X en dinsdag deed ik Y" → 2 entries
-- "Ik heb vloerbedekking en schilderwerk gedaan" op dezelfde dag → 1 entry met 2 regelitems (tenzij expliciet apart gefactureerd)
+- Meerdere werkzaamheden op dezelfde dag/locatie → 1 entry met MEERDERE regelitems
+
+REGELITEMS — HEEL BELANGRIJK:
+Maak een APART regelitem voor ELKE individuele taak, elk object, of elke genoemde werkzaamheid.
+De aannemer noemt vaak meerdere dingen op. Woorden als "daarnaast", "ook", "en dan", "de andere", "deze ... die ..." duiden op APARTE regelitems.
+
+Voorbeeld: "Deze muur verven voor 1000 euro. Daarnaast gaan we die muur ook verven voor 5000 euro."
+→ Dit zijn 2 APARTE regelitems:
+  - Regelitem 1: muur 1 verven, €1.000
+  - Regelitem 2: muur 2 verven, €5.000
+Voeg ze NIET samen tot 1 regelitem!
+
+Nog een voorbeeld: "40m2 laminaat leggen en 20m2 tegels zetten"
+→ 2 regelitems: laminaat 40m2 + tegels 20m2
 
 Regels:
 - Alle bedragen in euro's
 - BTW-tarief standaard 21% tenzij anders vermeld
 - Eenheden: "uur", "stuk", "m2", "m1", "dag", "post"
-- Splits werkzaamheden en materialen in aparte regelitems
+- Als een totaalprijs wordt genoemd voor een taak, gebruik unit="post" met quantity=1 en unit_price=totaalprijs
+- Als m2 + totaalprijs worden genoemd, gebruik unit="m2" met de genoemde m2 als quantity en bereken de unit_price (totaalprijs / m2)
 - Als de aannemer een klant of project noemt, geef dat mee als hint
 - Genereer een beknopte titel per entry
 - entry_date: gebruik de genoemde datum of null als geen datum genoemd wordt. Vandaag is {$today}.
@@ -307,29 +329,55 @@ SYS,
     }
 
     /**
-     * Analyze video keyframes using Claude Vision.
-     * Sends multiple frame images in a single API call and returns
-     * a combined visual analysis of the project site.
+     * Analyze video keyframes using Claude Vision, correlated with the spoken transcript.
      *
-     * @param array<string> $framePaths Absolute paths to JPEG keyframe images
+     * Each frame is labeled with its timestamp and matched with what was being
+     * said at that moment. This allows the AI to understand which narration
+     * refers to which visual content (e.g. "this wall" while pointing at wall A
+     * vs "this wall" while pointing at wall B).
+     *
+     * @param array<array{path: string, timestamp: int}> $frames Keyframes with timestamps
+     * @param array $segments Whisper transcript segments [{start, end, text}, ...]
      * @return array{text: string, usage: array}
      */
-    public function analyzeVideoFrames(array $framePaths): array
+    public function analyzeVideoFrames(array $frames, array $segments = []): array
     {
         if (empty($this->apiKey)) {
             throw new RuntimeException('Anthropic API key is not configured.');
         }
 
-        if (empty($framePaths)) {
+        if (empty($frames)) {
             return ['text' => '', 'usage' => ['input_tokens' => 0, 'output_tokens' => 0, 'total_tokens' => 0]];
         }
 
         $content = [];
 
-        foreach ($framePaths as $path) {
+        foreach ($frames as $frame) {
+            $path = $frame['path'] ?? $frame;
+            $timestamp = $frame['timestamp'] ?? null;
+
             if (!file_exists($path)) {
                 continue;
             }
+
+            // Find what was being said around this timestamp
+            $spokenText = '';
+            if ($timestamp !== null && !empty($segments)) {
+                $spokenText = $this->getSpokenTextAtTimestamp($timestamp, $segments);
+            }
+
+            // Label: "Beeld op 0:30" or "Beeld op 0:30 — Gesproken: ..."
+            $mins = floor($timestamp / 60);
+            $secs = $timestamp % 60;
+            $label = sprintf('Beeld op %d:%02d', $mins, $secs);
+            if ($spokenText) {
+                $label .= " — Gesproken: \"{$spokenText}\"";
+            }
+
+            $content[] = [
+                'type' => 'text',
+                'text' => $label,
+            ];
 
             $content[] = [
                 'type' => 'image',
@@ -347,7 +395,7 @@ SYS,
 
         $content[] = [
             'type' => 'text',
-            'text' => 'Analyseer deze beelden uit een video-opname van een bouwproject. Beschrijf wat je ziet.',
+            'text' => 'Analyseer deze video-opname van een bouwproject. Koppel wat je ZIET aan wat er GEZEGD wordt bij elk beeld. Als de vakman naar iets wijst of iets benoemt, beschrijf dan precies welk object/muur/ruimte hij bedoelt op basis van het beeld.',
         ];
 
         $response = Http::timeout(120)
@@ -361,18 +409,20 @@ SYS,
                 'max_tokens' => 4096,
                 'system' => <<<'SYS'
 Je bent een visuele analyse-assistent voor een Nederlandse aannemer/ZZP'er in de bouw.
-Je ontvangt keyframes (beelden) uit een video-opname van een bouwproject of werklocatie.
+Je ontvangt keyframes uit een video-opname, elk gelabeld met een tijdstip en wat de vakman op dat moment zegt.
+
+BELANGRIJK: De vakman filmt terwijl hij rondloopt en praat. Als hij zegt "deze muur" of "hier moet..." dan bedoelt hij wat er op DAT moment in beeld is. Gebruik het gesproken commentaar om te begrijpen wat hij bedoelt met wat je ziet.
 
 Jouw taak:
-- Beschrijf wat je ziet op de werklocatie: ruimtes, materialen, gereedschap, staat van het werk
+- Koppel elk gesproken fragment aan het juiste beeld. Als hij bij 0:10 zegt "deze muur moet gestuukt" en bij 0:30 "deze muur moet geverfd", dan zijn dat TWEE VERSCHILLENDE muren — beschrijf ze apart.
+- Beschrijf per locatie/object: wat je ziet + wat de vakman erover zegt + welk werk er nodig is
 - Let op bouwkundige details: type vloer, wanden, plafond, installaties, leidingen
 - Herken materialen: hout, tegels, stuc, verf, isolatie, laminaat, etc.
 - Noteer afmetingen, merken of labels als je die kunt lezen
-- Beschrijf de voortgang van het werk: wat is klaar, wat moet nog gedaan worden
 - Noem zichtbare problemen: schade, lekkage, scheuren, slijtage
-- Geef een gestructureerd overzicht, niet per frame maar als geheel
 
-Schrijf in het Nederlands. Wees beknopt maar volledig. Focus op informatie die relevant is voor een werkbon of offerte.
+Structureer je output per werklocatie/object, niet per tijdstip.
+Schrijf in het Nederlands. Focus op informatie die relevant is voor een werkbon of offerte.
 SYS,
                 'messages' => [
                     [
@@ -384,7 +434,15 @@ SYS,
 
         if ($response->failed()) {
             $error = $response->json('error.message', 'Unknown error');
-            throw new RuntimeException("Claude Vision API failed: {$error}");
+            $type = $response->json('error.type', 'unknown');
+            \Illuminate\Support\Facades\Log::error('Claude Vision API response', [
+                'status' => $response->status(),
+                'type' => $type,
+                'message' => $error,
+                'frame_count' => count($frames),
+                'body' => substr($response->body(), 0, 500),
+            ]);
+            throw new RuntimeException("Claude Vision API failed ({$response->status()} {$type}): {$error}");
         }
 
         $data = $response->json();
@@ -400,6 +458,28 @@ SYS,
                 'total_tokens' => $inputTokens + $outputTokens,
             ],
         ];
+    }
+
+    /**
+     * Find transcript segments spoken around a given timestamp.
+     * Collects text from segments that overlap with a window around the timestamp.
+     */
+    private function getSpokenTextAtTimestamp(int $timestamp, array $segments): string
+    {
+        $window = 5; // seconds before/after to capture
+        $texts = [];
+
+        foreach ($segments as $segment) {
+            $start = (float) ($segment['start'] ?? 0);
+            $end = (float) ($segment['end'] ?? 0);
+
+            // Check if segment overlaps with [timestamp - window, timestamp + window]
+            if ($end >= ($timestamp - $window) && $start <= ($timestamp + $window)) {
+                $texts[] = trim($segment['text'] ?? '');
+            }
+        }
+
+        return implode(' ', array_filter($texts));
     }
 
     /**
